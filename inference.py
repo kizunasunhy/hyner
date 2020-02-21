@@ -87,7 +87,6 @@ class DecoderFromNamedEntitySequence():
 
                 if prev_entity_tag != "":
                     list_of_ner_word.append({"word": entity_word.replace("▁", " "), "tag": prev_entity_tag})
-                    print('fook')
                     sentence_with_tag += ':' + prev_entity_tag + ">"
                     
                     
