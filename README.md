@@ -1,13 +1,14 @@
 # hyner
 English | [Korean](/README_KOR.md)
+
 hyner is a Korean named entity recognizer (NER) based on KoBERT.
 ## Usage
 ### Requirement
 ```
 PyTorch 0.4 or higher
-sklearn
+scikit-learn
 tqdm
-MXNET
+MXNet
 ```
 We highly recommned the conda virtual environment. And for PyTorch 0.4, we've tested that only torch0.4 + cuda9.2 can work. Otherwise you will get a "RuntimeError: CuDNN error: CUDNN_STATUS_SUCCESS" error.
 ```
@@ -18,21 +19,18 @@ First, please download our pretrained model.
 https://drive.google.com/open?id=1uJkbM3vT0kURxzIV7x8VHDkn9USkv2Ou
 And put the `model.state` and `optim.state` in `/logdir/corpus.cut2.sdo0.0.emb100.lr0.001.lrd0.6.bs250`
 
-And then export the python path.
-```
-export PYTHONPATH=/path/to/hykom/src
-```
 We provided a trained model and it's very easy to see the result from a simple demo.
 ```
-python demo.py
+python inference.py
 ```
 For example, if you input "도연이는 2018년에 골드만삭스에 입사했다.", you can get:
 ```
 list_of_ner_word: [{'word': ' 도연이', 'tag': 'PER'}, {'word': ' 2018년에', 'tag': 'DAT'}, {'word': ' 골드만삭스', 'tag': 'ORG'}]
 decoding_ner_sentence: <도연이:PER>는 <2018년에:DAT> <골드만삭스:ORG>에 입사했다.
 ```
-## Corpus
-
+## Dataset
+Please refer to this link:
+https://github.com/kmounlp/NER
 ## Training
 ### Preperation
 
