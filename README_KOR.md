@@ -1,7 +1,7 @@
 # hyner
 [English](/README.md) | Korean
 
-hyner 는 KoBERT 기반으로 개발한 한국어 개체명 인식기입니다.
+hyner는 KoBERT 기반으로 개발한 한국어 개체명 인식기입니다.
 
 ## 실행방법
 ### 필요한 페키지
@@ -11,39 +11,39 @@ scikit-learn
 tqdm
 MXNet
 ```
-We highly recommned the conda virtual environment. And for PyTorch 0.4, we've tested that only torch0.4 + cuda9.2 can work. Otherwise you will get a "RuntimeError: CuDNN error: CUDNN_STATUS_SUCCESS" error.
+Conda 가상환경을 권장합니다. And for PyTorch 0.4, we've tested that only torch0.4 + cuda9.2 can work. Otherwise you will get a "RuntimeError: CuDNN error: CUDNN_STATUS_SUCCESS" error.
 ```
 $ conda install pytorch=0.4.1 cuda92 -c pytorch
 ```
 ### 데모
-First, please download our pretrained model: [Model file](https://drive.google.com/drive/folders/1aiq8m1kh5esD3tdmGjJlBddG5-Sgrb9k?usp=sharing)
+pretrained 모델을 다운 받으세요: [Model file](https://drive.google.com/drive/folders/1aiq8m1kh5esD3tdmGjJlBddG5-Sgrb9k?usp=sharing)
 
-Put it under `/kobert_model/KobertCRF-lr5e-05-bs200` directory. And it's very easy to see the result from a simple demo.
+`/kobert_model/KobertCRF-lr5e-05-bs200`에 놓으시고 데모 스크립트 실행하세요.
 ```
 $ python inference.py
 ```
-For example, if you input "도연이는 2018년에 골드만삭스에 입사했다.", you can get:
+예를 들어서 "도연이는 2018년에 골드만삭스에 입사했다." 입력하면:
 ```
 list_of_ner_word: [{'word': ' 도연이', 'tag': 'PER'}, {'word': ' 2018년에', 'tag': 'DAT'}, {'word': ' 골드만삭스', 'tag': 'ORG'}]
 decoding_ner_sentence: <도연이:PER>는 <2018년에:DAT> <골드만삭스:ORG>에 입사했다.
 ```
 ## 데이터셋
-Please refer to this link:
+이 링크를 참고하세요:
 [Dataset](https://github.com/kmounlp/NER)
 
-Put the "말뭉치 - 형태소_개체명" folder under `data/NER-master` directory.
+"말뭉치 - 형태소_개체명"폴더를 `data/NER-master`에 놓으세요.
 ## 학습
 ### 준비
 이 링크를 참고하세요: [KoBERT Model file](https://kobert.blob.core.windows.net/models/kobert/pytorch/pytorch_kobert_2439f391a6.params)
 
-Download the model file and put it under `/kobert_model` directory.
+다운로드 하고 `/kobert_model`경로에 놓으세요.
 
 ### 학습 시작
 ```
 $ python train.py --fp16 --lr_schedule
 ```
-We highly recommend using NVIDIA's Automatic Mixed Precision (AMP) for acceleration.
-Install the [APEX](https://github.com/NVIDIA/apex) first and then turn on the "-fp16" option.
+NVIDIA의 Automatic Mixed Precision (AMP) GPU가속화를 권장합니다.
+[APEX](https://github.com/NVIDIA/apex) 설치하고 "-fp16" 옥션을 켜주세요.
 ## 성능
 ### 평가기준
 There are several stantard to evaluate the performance of a multi-class classification model like NER.
@@ -62,6 +62,6 @@ But it doesn't reflect the accuracy of every class's accuracy. Meanwhile there a
 
 ## 알으로 할 것
 ### Users Dictionary
-Still in developement. we will complete this function in the future.
+아직 개발 중입니다..
 ### 다른 모델
-We are doing the evaluation of BERT multilingual cased model. 
+BERT multilingual cased 모델도 개발하고 있습니다..
