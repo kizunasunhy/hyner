@@ -30,7 +30,7 @@ decoding_ner_sentence: <도연이:PER>는 <2018년에:DAT> <골드만삭스:ORG>
 Please refer to this link:
 [Dataset](https://github.com/kmounlp/NER)
 
-Put the "말뭉치 - 형태소_개체명" folder under data/NER-master directory.
+Put the "말뭉치 - 형태소_개체명" folder under `data/NER-master` directory.
 ## Training
 ### Preperation
 Please refer to this link: [KoBERT Model file](https://kobert.blob.core.windows.net/models/kobert/pytorch/pytorch_kobert_2439f391a6.params)
@@ -42,15 +42,13 @@ Download the model file and put it under `/kobert_model` directory.
 $ python train.py --fp16 --lr_schedule
 ```
 We highly recommend using NVIDIA's Automatic Mixed Precision (AMP) for acceleration.
-[APEX](https://github.com/NVIDIA/apex)
-
-Install the apex first and then turn on the "-fp16" option.
+Install the [APEX](https://github.com/NVIDIA/apex) first and then turn on the "-fp16" option.
 ## Performance
 ### Criteria
 There are several stantard to evaluate the performance of a multi-class classification model like NER.
 First the simplest criteria is global accuracy. If we've got the confusion matrix, 
 
-global accuracy = confusion_matrix.trace()/confusion_matrix.sum()
+`global accuracy = confusion_matrix.trace()/confusion_matrix.sum()`
 
 But it doesn't reflect the accuracy of every class's accuracy. Meanwhile there are micro f1 score and macro f1 score. In this project, we consider macro f1 score the most, and micro f1 score and global accuray at the same time.
 
@@ -61,5 +59,8 @@ But it doesn't reflect the accuracy of every class's accuracy. Meanwhile there a
 | KobertOnly-lr5e-05-bs200 | 0.8909 |
 | KobertCRF-lr5e-05-bs200 | 0.8940  |
 
-## Users Dictionary
+## In the future
+### Users Dictionary
 Still in developement. we will complete this function in the future.
+### Other model's evaluation
+We are doing the evaluation of BERT multilingual cased model. 
