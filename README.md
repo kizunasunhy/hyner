@@ -64,3 +64,11 @@ But it doesn't reflect the accuracy of every class's accuracy. Meanwhile there a
 Still in developement. we will complete this function in the future.
 ### Other model's evaluation
 We are doing the evaluation of BERT multilingual cased model. 
+```
+cd bert_mulri_model
+```
+And then start training like before
+```
+$ python train.py --fp16 --lr_schedule
+```
+In this case, BERT-multi-cased model is based on character level rather than tokens.
