@@ -65,7 +65,7 @@ Still in developement. we will complete this function in the future.
 ### Other model's evaluation
 We are doing the evaluation of BERT multilingual cased model. 
 ```
-cd bert_mulri_model
+cd bert_multi_model
 ```
 And then start training like before
 ```
