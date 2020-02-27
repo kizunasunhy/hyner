@@ -64,4 +64,12 @@ But it doesn't reflect the accuracy of every class's accuracy. Meanwhile there a
 ### Users Dictionary
 아직 개발 중입니다..
 ### 다른 모델
-BERT multilingual cased 모델도 개발하고 있습니다..
+BERT-multilingual-cased 모델도 개발하고 있습니다..
+```
+cd bert_multi_model
+```
+전처럼 학습시킵니다:
+```
+$ python train.py --fp16 --lr_schedule
+```
+BERT-multi-cased 모델의 경우는 토큰말고 character 레벨을 바탕으로 개발한겁니다.
