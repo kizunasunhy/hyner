@@ -29,19 +29,17 @@ decoding_ner_sentence: <도연이:PER>는 <2018년에:DAT> <골드만삭스:ORG>
 ## Dataset
 ### NER tag
 PER: Person  
-LOC: Location
-ORG: Organization
-POH: Others
-DAT: Date
-TIM: Time
-DUR: Duration
-MNY: Money
-PNT: Proportion
-NOH: Other measure words
-
+LOC: Location  
+ORG: Organization  
+POH: Others  
+DAT: Date  
+TIM: Time  
+DUR: Duration  
+MNY: Money  
+PNT: Proportion  
+NOH: Other measure words  
 Please refer to this link:
-[Dataset](https://github.com/kmounlp/NER)
-
+[Dataset](https://github.com/kmounlp/NER)  
 Put the "말뭉치 - 형태소_개체명" folder under `data/NER-master` directory.
 ## Training
 ### Preperation
