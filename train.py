@@ -81,12 +81,12 @@ def main(parser):
     val_dl = DataLoader(val_ds, batch_size=model_config.batch_size, shuffle=True, num_workers=2, drop_last=False)
  
     # Model
-    #model = KobertCRF(config=model_config, num_classes=len(tr_ds.ner_to_index))
+    model = KobertCRF(config=model_config, num_classes=len(tr_ds.ner_to_index))
     #model = KobertCRFViz(config=model_config, num_classes=len(tr_ds.ner_to_index))
     #model = KobertBiLSTMCRF(config=model_config, num_classes=len(tr_ds.ner_to_index))
     #model = KobertOnly(config=model_config, num_classes=len(tr_ds.ner_to_index))
     #model = BiLSTM(config=model_config, num_classes=len(tr_ds.ner_to_index))
-    model = BiLSTM_CRF(config=model_config, num_classes=len(tr_ds.ner_to_index))
+    #model = BiLSTM_CRF(config=model_config, num_classes=len(tr_ds.ner_to_index))
     model.train()
     
     # optim
@@ -155,10 +155,7 @@ def main(parser):
     criterion = nn.CrossEntropyLoss()
     
     train_begin = datetime.now()
-    '''
-    train_iterator = trange(int(model_config.epochs), desc="Epoch")  
-    for _epoch, _ in enumerate(train_iterator):
-    '''
+
     for _epoch in range(model_config.epochs):
         #epoch_iterator = tqdm(tr_dl, desc="Iteration")
         epoch_iterator = tr_dl
