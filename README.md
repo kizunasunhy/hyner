@@ -27,6 +27,18 @@ list_of_ner_word: [{'word': ' 도연이', 'tag': 'PER'}, {'word': ' 2018년에',
 decoding_ner_sentence: <도연이:PER>는 <2018년에:DAT> <골드만삭스:ORG>에 입사했다.
 ```
 ## Dataset
+### NER tag
+PER: Person
+LOC: Location
+ORG: Organization
+POH: Others
+DAT: Date
+TIM: Time
+DUR: Duration
+MNY: Money
+PNT: Proportion
+NOH: Other measure words
+
 Please refer to this link:
 [Dataset](https://github.com/kmounlp/NER)
 
@@ -52,6 +64,7 @@ First the simplest criteria is global accuracy. If we've got the confusion matri
 
 But it doesn't reflect the accuracy of every class's accuracy. Meanwhile there are micro f1 score and macro f1 score. In this project, we consider macro f1 score the most, and micro f1 score and global accuray at the same time.
 
+The results in 25 epochs (with early stop, patience = 10) are as follows.
 | Model | macro f1 score |
 | ------------ | ------------- |
 | BiLSTM-lr0.005-bs200 | 0.8096 |
