@@ -28,7 +28,7 @@ decoding_ner_sentence: <도연이:PER>는 <2018년에:DAT> <골드만삭스:ORG>
 ```
 ## Dataset
 ### NER tag
-PER: Person
+PER: Person  
 LOC: Location
 ORG: Organization
 POH: Others
