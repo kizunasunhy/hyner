@@ -51,7 +51,24 @@ First the simplest criteria is global accuracy. If we've got the confusion matri
 
 `global accuracy = confusion_matrix.trace()/confusion_matrix.sum()`
 
-But it doesn't reflect the accuracy of every class's accuracy. Meanwhile there are micro f1 score and macro f1 score. In this project, we consider macro f1 score the most, and micro f1 score and global accuray at the same time.
+하지만 각 class의 정확도를 반영하지 못합니다.
+
+또한, multi class classification문제에서
+micro f1 score와 macro f1 score가 가장 많이 쓰는 기준이다.
+
+micro f1 score는 각 class를 구분하지 않고
+전체의 TP (True Positive), FP (False Positive), FN (False Negative) 를 계산하고,
+```
+precision = TP/ (TP + FP)
+recall = TP/( TP + FN)
+micro f1 score = 2 * precision * recall/(precision + recall)
+```
+macro f1 score는 위에 계산식으로 우선 각 class의 f1 score를 계산하고
+F1, F1, F1,... 그리고 average를 한다. 가령 class가 n개 있는 경우:
+```
+macro f1 score = (F1 + F1 + F1,...)/n
+```
+본 프로젝트에서는 macro f1 score를 이용해서 평가합니다.
 ### 결과
 | Model | macro f1 score |
 | ------------ | ------------- |
@@ -60,7 +77,7 @@ But it doesn't reflect the accuracy of every class's accuracy. Meanwhile there a
 | KobertOnly-lr5e-05-bs200 | 0.8909 |
 | KobertCRF-lr5e-05-bs200 | 0.8940  |
 
-## 알으로 할 것
+## 앞으로 할 것
 ### Users Dictionary
 아직 개발 중입니다..
 ### 다른 모델
@@ -73,3 +90,6 @@ cd bert_multi_model
 $ python train.py --fp16 --lr_schedule
 ```
 BERT-multi-cased 모델의 경우는 토큰말고 character 레벨을 바탕으로 개발한겁니다.
+| Model | macro f1 score |
+| ------------ | ------------- |
+| BiLSTM-lr0.005-bs200 | 0.8385 |
