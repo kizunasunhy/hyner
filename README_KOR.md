@@ -28,14 +28,24 @@ list_of_ner_word: [{'word': ' 도연이', 'tag': 'PER'}, {'word': ' 2018년에',
 decoding_ner_sentence: <도연이:PER>는 <2018년에:DAT> <골드만삭스:ORG>에 입사했다.
 ```
 ## 데이터셋
+### 개체명 인식 태그
+총 8개의 태그  
+PER: 사람이름  
+LOC: 지명  
+ORG: 기관명  
+POH: 기타  
+DAT: 날짜  
+TIM: 시간  
+DUR: 기간  
+MNY: 통화  
+PNT: 비율  
+NOH: 기타 수량표현    
 이 링크를 참고하세요:
-[Dataset](https://github.com/kmounlp/NER)
-
+[Dataset](https://github.com/kmounlp/NER)  
 "말뭉치 - 형태소_개체명"폴더를 `data/NER-master`에 놓으세요.
 ## 학습
 ### 준비
-이 링크를 참고하세요: [KoBERT Model file](https://kobert.blob.core.windows.net/models/kobert/pytorch/pytorch_kobert_2439f391a6.params)
-
+이 링크를 참고하세요: [KoBERT Model file](https://kobert.blob.core.windows.net/models/kobert/pytorch/pytorch_kobert_2439f391a6.params)  
 다운로드 하고 `/kobert_model`경로에 놓으세요.
 
 ### 학습 시작
@@ -51,11 +61,9 @@ First the simplest criteria is global accuracy. If we've got the confusion matri
 
 `global accuracy = confusion_matrix.trace()/confusion_matrix.sum()`
 
-하지만 각 class의 정확도를 반영하지 못합니다.
-
+하지만 각 class의 정확도를 반영하지 못합니다.  
 또한, multi class classification문제에서
-micro f1 score와 macro f1 score가 가장 많이 쓰는 기준이다.
-
+micro f1 score와 macro f1 score가 가장 많이 쓰는 기준이다.  
 micro f1 score는 각 class를 구분하지 않고
 전체의 TP (True Positive), FP (False Positive), FN (False Negative) 를 계산하고,
 ```
@@ -64,12 +72,13 @@ recall = TP/( TP + FN)
 micro f1 score = 2 * precision * recall/(precision + recall)
 ```
 macro f1 score는 위에 계산식으로 우선 각 class의 f1 score를 계산하고
-F1, F1, F1,... 그리고 average를 한다. 가령 class가 n개 있는 경우:
+F11, F12, F13,... 그리고 average를 한다. 가령 class가 n개 있는 경우:
 ```
-macro f1 score = (F1 + F1 + F1,...)/n
+macro f1 score = (F11 + F12 + F13,...)/n
 ```
 본 프로젝트에서는 macro f1 score를 이용해서 평가합니다.
 ### 결과
+25 epoch (early stop 있는 경우, patience = 10) 의 결과가 아래와 같습니다.
 | Model | macro f1 score |
 | ------------ | ------------- |
 | BiLSTM-lr0.005-bs200 | 0.8096 |
@@ -93,3 +102,4 @@ BERT-multi-cased 모델의 경우는 토큰말고 character 레벨을 바탕으�
 | Model | macro f1 score |
 | ------------ | ------------- |
 | BiLSTM-lr0.005-bs200 | 0.8385 |
+KoBERT 모델과 비교해보면 역시 character 기반이 좀 부족하다고 볼 수 있습니다.
