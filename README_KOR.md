@@ -102,4 +102,5 @@ BERT-multi-cased 모델의 경우는 토큰말고 character 레벨을 바탕으�
 | Model | macro f1 score |
 | ------------ | ------------- |
 | BiLSTM-lr0.005-bs200 | 0.8385 |
+
 KoBERT 모델과 비교해보면 역시 character 기반이 좀 부족하다고 볼 수 있습니다.
