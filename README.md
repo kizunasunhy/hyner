@@ -15,8 +15,7 @@ We highly recommned the conda virtual environment. And for PyTorch 0.4, we've te
 $ conda install pytorch=0.4.1 cuda92 -c pytorch
 ```
 ### Inference Demo
-First, please download our pretrained model: [Model file](https://drive.google.com/drive/folders/1aiq8m1kh5esD3tdmGjJlBddG5-Sgrb9k?usp=sharing)
-
+First, please download our pretrained model: [Model file](https://drive.google.com/drive/folders/1aiq8m1kh5esD3tdmGjJlBddG5-Sgrb9k?usp=sharing)  
 Put it under `/kobert_model/KobertCRF-lr5e-05-bs200` directory. And it's very easy to see the result from a simple demo.
 ```
 $ python inference.py
@@ -38,13 +37,13 @@ DUR: Duration
 MNY: Money  
 PNT: Proportion  
 NOH: Other measure words  
+
 Please refer to this link:
 [Dataset](https://github.com/kmounlp/NER)  
 Put the "말뭉치 - 형태소_개체명" folder under `data/NER-master` directory.
 ## Training
 ### Preperation
-Please refer to this link: [KoBERT Model file](https://kobert.blob.core.windows.net/models/kobert/pytorch/pytorch_kobert_2439f391a6.params)
-
+Please refer to this link: [KoBERT Model file](https://kobert.blob.core.windows.net/models/kobert/pytorch/pytorch_kobert_2439f391a6.params)  
 Download the model file and put it under `/kobert_model` directory.
 
 ### Start training
