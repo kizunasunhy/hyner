@@ -59,7 +59,20 @@ First the simplest criteria is global accuracy. If we've got the confusion matri
 
 `global accuracy = confusion_matrix.trace()/confusion_matrix.sum()`
 
-But it doesn't reflect the accuracy of every class's accuracy. Meanwhile there are micro f1 score and macro f1 score. In this project, we consider macro f1 score the most, and micro f1 score and global accuray at the same time.
+But it doesn't reflect the accuracy of every class's accuracy. And in multi class classification's situation,
+micro f1 score and macro f1 score are more frequently used for evaluation.
+micro f1 score doesn't distinguish classes, instead it calculates the overall TP (True Positive), FP (False Positive), FN (False Negative):
+```
+precision = TP/ (TP + FP)
+recall = TP/( TP + FN)
+micro f1 score = 2 * precision * recall/(precision + recall)
+```
+While macro f1 score uses the same formula to calculate every class's f1 scores F11, F12, F13,... 
+and then average them. In the situation of n classes, macro f1 score is like this:
+```
+macro f1 score = (F11 + F12 + F13,...)/n
+```
+In this project, we consider macro f1 score the most, and micro f1 score and global accuray at the same time.
 
 The results in 25 epochs (with early stop, patience = 10) are as follows.
 | Model | macro f1 score |
@@ -82,3 +95,9 @@ And then start training like before
 $ python train.py --fp16 --lr_schedule
 ```
 In this case, BERT-multi-cased model is based on character level rather than tokens.
+
+| Model | macro f1 score |
+| ------------ | ------------- |
+| BiLSTM-lr0.005-bs200 | 0.8385 |
+
+So we discovered that token-based KoBERT model outperformed character based BERT-multi model.
