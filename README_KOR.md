@@ -11,7 +11,7 @@ scikit-learn
 tqdm
 MXNet
 ```
-Conda 가상환경을 권장합니다. And for PyTorch 0.4, we've tested that only torch0.4 + cuda9.2 can work. Otherwise you will get a "RuntimeError: CuDNN error: CUDNN_STATUS_SUCCESS" error.
+Conda 가상환경을 권장합니다. PyTorch 0.4 같은 경우에는, we've tested that only torch0.4 + cuda9.2 can work. Otherwise you will get a "RuntimeError: CuDNN error: CUDNN_STATUS_SUCCESS" error.
 ```
 $ conda install pytorch=0.4.1 cuda92 -c pytorch
 ```
@@ -50,19 +50,21 @@ NOH: 기타 수량표현
 
 ### 학습 시작
 ```
-$ python train.py --fp16 --lr_schedule
+$ python train.py --lr_schedule
 ```
 NVIDIA의 Automatic Mixed Precision (AMP) GPU가속화를 권장합니다.
 [APEX](https://github.com/NVIDIA/apex) 설치하고 "-fp16" 옥션을 켜주세요.
 ## 성능
 ### 평가기준
-There are several stantard to evaluate the performance of a multi-class classification model like NER.
-First the simplest criteria is global accuracy. If we've got the confusion matrix, 
-
-`global accuracy = confusion_matrix.trace()/confusion_matrix.sum()`
-
+개체명 인식은 benchmark 여러가지 있습니다. 우선 tag 종류는 보통 5가지만 있는데(PER LOC ORG MISC O)
+데터셋 따라서 더 구체적으로 구분할 수도 있습니다. 예를 들어, 본 프로젝트에서 쓰는tag가 11가지 있습니다.  
+또한, 정확도를 평가하는 기준도 여러가지가 있습니다. 우선 가장 간단한 기준은 global accuray입니다.  
+가령 confusion matrix 있으면,  
+```
+global accuracy = confusion_matrix.trace()/confusion_matrix.sum()
+```
 하지만 각 class의 정확도를 반영하지 못합니다.  
-또한, multi class classification문제에서
+그리고, multi class classification문제에서
 micro f1 score와 macro f1 score가 가장 많이 쓰는 기준이다.  
 micro f1 score는 각 class를 구분하지 않고
 전체의 TP (True Positive), FP (False Positive), FN (False Negative) 를 계산하고,
@@ -104,3 +106,5 @@ BERT-multi-cased 모델의 경우는 토큰말고 character 레벨을 바탕으�
 | BiLSTM-lr0.005-bs200 | 0.8385 |
 
 KoBERT 모델과 비교해보면 역시 character 기반이 좀 부족하다고 볼 수 있습니다.
+### RESTful API
+개발할 예정입니다..
