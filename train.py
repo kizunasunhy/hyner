@@ -43,6 +43,7 @@ def main(parser):
     model_dir = Path(args.model_dir)   
     model_config = Config(json_path=model_dir / 'config.json')
     model_config.learning_rate = args.lr
+    model_config.batch_size = args.batch_size
     
     tok_path = './tokenizer_78b3253a26.model'
     
@@ -82,7 +83,6 @@ def main(parser):
  
     # Model
     model = KobertCRF(config=model_config, num_classes=len(tr_ds.ner_to_index))
-    #model = KobertCRFViz(config=model_config, num_classes=len(tr_ds.ner_to_index))
     #model = KobertBiLSTMCRF(config=model_config, num_classes=len(tr_ds.ner_to_index))
     #model = KobertOnly(config=model_config, num_classes=len(tr_ds.ner_to_index))
     #model = BiLSTM(config=model_config, num_classes=len(tr_ds.ner_to_index))
@@ -102,8 +102,8 @@ def main(parser):
 
     # num_train_optimization_steps = int(train_examples_len / model_config.batch_size / model_config.gradient_accumulation_steps) * model_config.epochs
     t_total = len(tr_dl) // model_config.gradient_accumulation_steps * model_config.epochs
-    #optimizer = AdamW(optimizer_grouped_parameters, lr=model_config.learning_rate, eps=model_config.adam_epsilon)
-    optimizer = torch.optim.Adam(model.parameters(), model_config.learning_rate)
+    optimizer = AdamW(optimizer_grouped_parameters, lr=model_config.learning_rate, eps=model_config.adam_epsilon)
+    #optimizer = torch.optim.Adam(model.parameters(), model_config.learning_rate)
     if args.lr_schedule:
         scheduler = WarmupLinearSchedule(optimizer, warmup_steps=model_config.warmup_steps, t_total=t_total)
         #lmbda = lambda epoch: 0.5
@@ -155,7 +155,10 @@ def main(parser):
     criterion = nn.CrossEntropyLoss()
     
     train_begin = datetime.now()
-
+    '''
+    train_iterator = trange(int(model_config.epochs), desc="Epoch")  
+    for _epoch, _ in enumerate(train_iterator):
+    '''
     for _epoch in range(model_config.epochs):
         #epoch_iterator = tqdm(tr_dl, desc="Iteration")
         epoch_iterator = tr_dl
@@ -238,60 +241,52 @@ def main(parser):
                     logging.info('epoch : {}, global_step : {}, tr_loss: {:.3f}, tr_acc: {:.2%}' \
                                  .format(epoch + 1, global_step, tr_summary['loss'], tr_summary['acc']))
                 
-                # evaluation and save model
-                if model_config.logging_steps > 0 and global_step % model_config.logging_steps == 0:
 
-                    eval_summary = evaluate(model, val_dl)
+        eval_summary = evaluate(model, val_dl)
                     
-                    f_scores.append(eval_summary['macro_f1_score'])
+        f_scores.append(eval_summary['macro_f1_score'])
                     
-                    # Save model checkpoint
-                    summary = {'train': tr_summary, 'eval': eval_summary}
-                    summary_manager.update(summary)
-                    summary_manager.save('summary.json')
+        # Save model checkpoint
+        summary = {'train': tr_summary, 'eval': eval_summary}
+        summary_manager.update(summary)
+        summary_manager.save('summary.json')
 
-                    # Save
-                    is_best = eval_summary["macro_f1_score"] >= best_dev_acc  # acc 기준 (원래는 train_acc가 아니라 val_acc로 해야)  
-                    is_best_str = 'BEST' if is_best else '< {:.4f}'.format(max(f_scores))
-                    logging.info('[Los trn]  [Los dev]  [global acc]  [micro f1]  [macro f1]     [global step]    [LR]')
-                    logging.info('{:8.2f}  {:9.2f}  {:9.2f}  {:11.4f}  {:9.4f} {:4}  {:9}  {:14.8f}' \
-                                 .format((tr_loss - logging_loss) / model_config.logging_steps, eval_summary['eval_loss'], \
-                                         eval_summary['eval_global_acc'], eval_summary['micro_f1_score'], \
-                                         eval_summary['macro_f1_score'], is_best_str, global_step, model_config.learning_rate))
-                    print('{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(epoch, tr_loss, \
-                                                              eval_summary['eval_loss'], eval_summary['eval_global_acc'], \
-                                                              eval_summary['micro_f1_score'], eval_summary['macro_f1_score'], \
-                                                              model_config.learning_rate), file=log_file)
-                    log_file.flush()
+        # Save
+        is_best = eval_summary["macro_f1_score"] >= best_dev_acc  # acc 기준 (원래는 train_acc가 아니라 val_acc로 해야)  
+        is_best_str = 'BEST' if is_best else '< {:.4f}'.format(max(f_scores))
+        logging.info('[Los trn]  [Los dev]  [global acc]  [micro f1]  [macro f1]     [global step]    [LR]')
+        logging.info('{:8.2f}  {:9.2f}  {:9.2f}  {:11.4f}  {:9.4f} {:4}  {:9}  {:14.8f}' \
+                        .format((tr_loss - logging_loss) / model_config.logging_steps, eval_summary['eval_loss'], \
+                                eval_summary['eval_global_acc'], eval_summary['micro_f1_score'], \
+                                eval_summary['macro_f1_score'], is_best_str, global_step, model_config.learning_rate))
+        print('{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(epoch, tr_loss, \
+                                                    eval_summary['eval_loss'], eval_summary['eval_global_acc'], \
+                                                    eval_summary['micro_f1_score'], eval_summary['macro_f1_score'], \
+                                                    model_config.learning_rate), file=log_file)
+        log_file.flush()
                     
-                    logging_loss = tr_loss
+        logging_loss = tr_loss
                     
-                    if is_best:
-                        best_dev_acc = eval_summary["macro_f1_score"]
-                        best_dev_loss = eval_summary["eval_loss"]
-                        best_steps = global_step
-                        best_epoch = epoch
-                        #checkpoint_manager.save_checkpoint(state, 'best-epoch-{}-step-{}-acc-{:.3f}.bin'.format(epoch + 1, global_step, best_dev_acc))
-                        #logging.info("Saving model checkpoint as best-epoch-{}-step-{}-acc-{:.3f}.bin".format(epoch + 1, global_step, best_dev_acc))
-                        logging.info("Saving model at epoch{}, step{} in {}".format(epoch, global_step, output_dir))
-                        torch.save(model.state_dict(), '{}/model.state'.format(output_dir))
-                        torch.save(optimizer.state_dict(), '{}/optim.state'.format(output_dir))
-                        patience = args.patience
+        if is_best:
+            best_dev_acc = eval_summary["macro_f1_score"]
+            best_dev_loss = eval_summary["eval_loss"]
+            best_steps = global_step
+            best_epoch = epoch
+            #checkpoint_manager.save_checkpoint(state, 'best-epoch-{}-step-{}-acc-{:.3f}.bin'.format(epoch + 1, global_step, best_dev_acc))
+            #logging.info("Saving model checkpoint as best-epoch-{}-step-{}-acc-{:.3f}.bin".format(epoch + 1, global_step, best_dev_acc))
+            logging.info("Saving model at epoch{}, step{} in {}".format(epoch, global_step, output_dir))
+            torch.save(model.state_dict(), '{}/model.state'.format(output_dir))
+            torch.save(optimizer.state_dict(), '{}/optim.state'.format(output_dir))
+            patience = args.patience
                         
-                    else:
-                        revert_to_best(model, optimizer, output_dir)
-                        patience -= 1
-                        logging.info("==== revert to epoch[%d], step%d. F1 score: %.4f, patience: %d ====", \
-                                     best_epoch, best_steps, max(f_scores), patience)
-                        
-                        if patience == 0:
-                            break
-                
         else:
-            
-            continue
-            
-        break
+            revert_to_best(model, optimizer, output_dir)
+            patience -= 1
+            logging.info("==== revert to epoch[%d], step%d. F1 score: %.4f, patience: %d ====", \
+                            best_epoch, best_steps, max(f_scores), patience)
+                        
+            if patience == 0:
+                break
         
     #print("global_step = {}, average loss = {}".format(global_step, tr_loss / global_step))
     #print(ptr_tokenizer('안녕하세요 중국에서 온 손홍양입니다'))
@@ -445,7 +440,6 @@ def evaluate(model, val_dl, prefix="NER"):
     assert len(list_of_y_real) == len(list_of_pred_tags)
     micro_f1 = f1_score(list_of_y_real, list_of_pred_tags, average="micro")
     macro_f1 = f1_score(list_of_y_real, list_of_pred_tags, average="macro")
-    #logger.info("micro fq score: {:.4}, macro f1 score: {:.4}".format(micro_f1, macro_f1))
     
     eval_loss = eval_loss / nb_eval_steps
     acc = (count_correct / total_count).item()  # tensor -> float 
@@ -456,14 +450,14 @@ def evaluate(model, val_dl, prefix="NER"):
     return results
     
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
     parser = argparse.ArgumentParser()
     parser.add_argument('--fp16', default=False, action='store_true', help='use fp16 training')
     parser.add_argument('--data_dir', default='./data', help="Directory containing config.json of data")
-    #parser.add_argument('--model_dir', default='/home/kizunasunhy/my_bert_ner/bert_multi_model', help="Directory containing config.json of model")
     parser.add_argument('--model_dir', default='./kobert_model', help="Directory containing config.json of model")
     parser.add_argument('--patience', type=int, default=10, help="Patience if macro f1 score is not increasing")
     parser.add_argument('--continue_train', default=False, action='store_true', help="Continue training.")
     parser.add_argument('--lr', type=float, default=5e-5, help='learning rate')
     parser.add_argument('--lr_schedule', default=False, action='store_true', help='Using learning rate scheduler')
+    parser.add_argument('--batch_size', type=int, default=256, help='learning rate')
     main(parser)
