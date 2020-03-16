@@ -101,3 +101,5 @@ In this case, BERT-multi-cased model is based on character level rather than tok
 | BiLSTM-lr0.005-bs200 | 0.8385 |
 
 So we discovered that token-based KoBERT model outperformed character based BERT-multi model.
+### RESTful API
+We are also about to develope the RESTful API, considering using the Docker.
