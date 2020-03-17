@@ -9,7 +9,11 @@ hyner는 KoBERT 기반으로 개발한 한국어 개체명 인식기입니다.
 PyTorch 0.4 or higher
 scikit-learn
 tqdm
-MXNet
+MXNet == 1.5.0 or higher
+gluonnlp == 0.8.1
+tensorflow == 1.14.0
+sentencepiece
+pytorch-crf
 ```
 Conda 가상환경을 권장합니다. PyTorch 0.4 같은 경우에는, we've tested that only torch0.4 + cuda9.2 can work. Otherwise you will get a "RuntimeError: CuDNN error: CUDNN_STATUS_SUCCESS" error.
 ```
@@ -90,7 +94,20 @@ macro f1 score = (F11 + F12 + F13,...)/n
 
 ## 앞으로 할 것
 ### Users Dictionary
-아직 개발 중입니다..
+Users dictionary가 이런 형식을 가지고 있습니다.
+
+후룬베얼 LOC  
+알리바바 ORG  
+컨버스 ORG  
+유튜브 ORG  
+추자현 PER  
+언더아머 ORG  
+
+예르르 들어, "미국 해군의 플레처급 구축함 DD-509 '컨버스'에 대한 내용은 플레처급 구축함 문서를 참조하십시오." 입력하면,
+```
+list_of_ner_word: [{'word': '미국해군의', 'tag': 'ORG'}, {'word': 'DD-509', 'tag': 'POH'}, {'word': '컨버스', 'tag': 'ORG'}]
+decoding_ner_sentence: <미국 해군의:ORG> 플레처급 구축함 <DD-509:POH> '<컨버스:ORG>'에 대한 내용은 플레처급 구축함 문서를 참조하십시오.
+```
 ### 다른 모델
 BERT-multilingual-cased 모델도 개발하고 있습니다..
 ```
