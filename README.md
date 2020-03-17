@@ -8,7 +8,11 @@ hyner is a Korean named entity recognizer (NER) based on KoBERT.
 PyTorch 0.4 or higher
 scikit-learn
 tqdm
-MXNet
+MXNet == 1.5.0 or higher
+gluonnlp == 0.8.1
+tensorflow == 1.14.0
+sentencepiece
+pytorch-crf
 ```
 We highly recommned the conda virtual environment. And for PyTorch 0.4, we've tested that only torch0.4 + cuda9.2 can work. Otherwise you will get a "RuntimeError: CuDNN error: CUDNN_STATUS_SUCCESS" error.
 ```
@@ -84,7 +88,22 @@ The results in 25 epochs (with early stop, patience = 10) are as follows.
 
 ## In the future
 ### Users Dictionary
-Still in developement. we will complete this function in the future.
+Still in the process of developement.  
+Users dictionary has this format:  
+
+후룬베얼	LOC  
+알리바바	ORG  
+컨버스	ORG  
+유튜브	ORG  
+추자현	PER  
+언더아머	ORG  
+
+For example, if you input "미국 해군의 플레처급 구축함 DD-509 '컨버스'에 대한 내용은 플레처급 구축함 문서를 참조하십시오."
+then will get the result:
+```
+list_of_ner_word: [{'word': '미국해군의', 'tag': 'ORG'}, {'word': 'DD-509', 'tag': 'POH'}, {'word': '컨버스', 'tag': 'ORG'}]
+decoding_ner_sentence: <미국 해군의:ORG> 플레처급 구축함 <DD-509:POH> '<컨버스:ORG>'에 대한 내용은 플레처급 구축함 문서를 참조하십시오.
+```
 ### Other model's evaluation
 We are doing the evaluation of BERT multilingual cased model. 
 ```
