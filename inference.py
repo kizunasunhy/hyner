@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import json
-import pickle
+#import pickle
 import argparse
 import torch
 import gluonnlp as nlp
@@ -14,6 +14,10 @@ from gluonnlp.data import SentencepieceTokenizer
 from pathlib import Path
 
 def main(parser):
+    
+    user_dic_path = 'userdic.txt'
+    user_dic = _load_users_dict(user_dic_path)
+    #print(users_dic)
 
     args = parser.parse_args()
     model_dir = Path(args.model_dir)
@@ -45,7 +49,7 @@ def main(parser):
 
     model.to(device)
 
-    decoder_from_res = DecoderFromNamedEntitySequence(tokenizer=tokenizer, index_to_ner=index_to_ner)
+    decoder_from_res = DecoderFromNamedEntitySequence(user_dic=user_dic, tokenizer=tokenizer, index_to_ner=index_to_ner)
 
     while(True):
         input_text = input("입력하세요: ")
@@ -60,15 +64,37 @@ def main(parser):
         list_of_pred_ids = model(x_input)
         #print(list_of_pred_ids)
         list_of_ner_word, decoding_ner_sentence = decoder_from_res(input_text, list_of_input_ids=list_of_input_ids, list_of_pred_ids=list_of_pred_ids)
+        
+        '''
+        for item in list_of_ner_word:
+            if item['word'] in user_dic:
+                print('fook')
+                item['tag'] = user_dic[item['word']]
+        '''        
         print("list_of_ner_word:", list_of_ner_word)
         print("decoding_ner_sentence:", decoding_ner_sentence[6:-5])
 
 
+def _load_users_dict(path: str):
+        
+    dic = {}
+    for line in open(path, 'r', encoding='utf-8-sig'):
+        line = line.rstrip('\r\n')
+        if not line:
+            continue
+        key, val = line.split('\t')
+#       _, item = val.split('/')
+        dic[key] = val
+#   logging.info('%s: %d entries', os.path.basename(path), len(dic))
+    return dic
+
+
 class DecoderFromNamedEntitySequence():
-    def __init__(self, tokenizer, index_to_ner):
+    def __init__(self, user_dic, tokenizer, index_to_ner):
         self.tokenizer = tokenizer
         self.index_to_ner = index_to_ner
-
+        self.user_dic = user_dic
+        
     def __call__(self, text, list_of_input_ids, list_of_pred_ids):
         input_token = self.tokenizer.decode_token_ids(list_of_input_ids)[0]
         pred_ner_tag = [self.index_to_ner[pred_id] for pred_id in list_of_pred_ids[0]]
@@ -80,15 +106,23 @@ class DecoderFromNamedEntitySequence():
         #tokens = input_token[1:-1]
         tokens = input_token
         list_of_ner_word = []
+        list_of_ner_item = [] #只存储list_of_ner_word的word部分，为了不出现重复
         entity_word, entity_tag, prev_entity_tag, sentence_with_tag = "", "", "", ""
+        
+        
         for i, pred_ner_tag_str in enumerate(pred_ner_tag):
             if "B-" in pred_ner_tag_str:
                 entity_tag = pred_ner_tag_str[-3:]
 
                 if prev_entity_tag != "":
-                    list_of_ner_word.append({"word": entity_word.replace("▁", " "), "tag": prev_entity_tag})
-                    sentence_with_tag += ':' + prev_entity_tag + ">"
                     
+                    if entity_word.replace("▁", "") in self.user_dic:
+                        prev_entity_tag = self.user_dic[entity_word.replace("▁", "")]
+                    
+                    if entity_word.replace("▁", "") not in list_of_ner_item:
+                        list_of_ner_word.append({"word": entity_word.replace("▁", ""), "tag": prev_entity_tag})
+                        list_of_ner_item.append(entity_word.replace("▁", ""))
+                    sentence_with_tag += ':' + prev_entity_tag + ">"                 
                     
                 entity_word = input_token[i]
                 prev_entity_tag = entity_tag
@@ -108,7 +142,13 @@ class DecoderFromNamedEntitySequence():
                     
             else:
                 if entity_word != "" and entity_tag != "":
-                    list_of_ner_word.append({"word":entity_word.replace("▁", " "), "tag":entity_tag})
+                    
+                    if entity_word.replace("▁", "") in self.user_dic:
+                        entity_tag = self.user_dic[entity_word.replace("▁", "")]
+                        
+                    if entity_word.replace("▁", "") not in list_of_ner_item:
+                        list_of_ner_word.append({"word":entity_word.replace("▁", ""), "tag":entity_tag})
+                        list_of_ner_item.append(entity_word.replace("▁", ""))
                     sentence_with_tag += ':' + entity_tag + ">"
                     
                 if '▁' in tokens[i]:
@@ -117,7 +157,8 @@ class DecoderFromNamedEntitySequence():
                     sentence_with_tag += tokens[i]
                     
                 entity_word, entity_tag, prev_entity_tag = "", "", "" 
-       
+        
+        #list_of_ner_word = list(set(list_of_ner_word))
         return list_of_ner_word, sentence_with_tag
 
 
