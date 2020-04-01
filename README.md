@@ -12,6 +12,7 @@ MXNet == 1.5.0 or higher
 gluonnlp == 0.8.1
 tensorflow == 1.14.0
 sentencepiece
+pytorch_transformers
 pytorch-crf
 ```
 We highly recommned the conda virtual environment. And for PyTorch 0.4, we've tested that only torch0.4 + cuda9.2 can work. Otherwise you will get a "RuntimeError: CuDNN error: CUDNN_STATUS_SUCCESS" error.
@@ -113,12 +114,13 @@ And then start training like before
 ```
 $ python train.py --fp16 --lr_schedule
 ```
-In this case, BERT-multi-cased model is based on character level rather than tokens.
+In this case, we used the BertTokenizer and the BertModel of 
+"bert-base-multilingual-cased" from pytorch_transformers package.
 
 | Model | macro f1 score |
 | ------------ | ------------- |
-| BiLSTM-lr0.005-bs200 | 0.8385 |
+| BiLSTM-lr0.005-bs200 | 0.8776 |
 
-So we discovered that token-based KoBERT model outperformed character based BERT-multi model.
+So we discovered that the pretrained KoBERT model outperformed BERT-multi model.
 ### RESTful API
-We are also about to develope the RESTful API, considering using the Docker.
+We've finished the development the RESTful API, using the Docker.
