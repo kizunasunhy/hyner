@@ -119,7 +119,7 @@ In this case, we used the BertTokenizer and the BertModel of
 
 | Model | macro f1 score |
 | ------------ | ------------- |
-| BiLSTM-lr0.005-bs200 | 0.8776 |
+| BertMulti_CRF-lr5e-05-bs256 | 0.8776 |
 
 So we discovered that the pretrained KoBERT model outperformed BERT-multi model.
 ### RESTful API
