@@ -1,15 +1,14 @@
 from pathlib import Path
 from torch.utils.data import DataLoader
-from pytorch_transformers import AdamW, WarmupLinearSchedule
+from pytorch_transformers import AdamW, WarmupLinearSchedule, BertTokenizer
 from tqdm import tqdm, trange
-from apex import amp
 from datetime import datetime, timedelta
 from sklearn.metrics import f1_score
 from torch.optim.lr_scheduler  import LambdaLR
 
 from vocab import Vocabulary
 from pad_sequence import keras_pad_fn
-from model import Config, BertMulti_CRF, KobertBiLSTMCRF, BertMulti_Only, BiLSTM, BiLSTM_CRF
+from model import Config, BertMulti_CRF, BertMulti_Only, BiLSTM, BiLSTM_CRF
 from dataset import NamedEntityRecognitionDataset
 from utils import set_seed, CheckpointManager, SummaryManager
 
@@ -28,7 +27,7 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
                     level = logging.INFO)
 logger = logging.getLogger(__name__)
 
-
+'''
 file = open('vocab.txt', 'r') 
 count = 0
 dic = {}
@@ -40,36 +39,47 @@ token_to_idx = dic
 
 vocab = Vocabulary(token_to_idx=token_to_idx)
 
-print(vocab.PAD_ID)
+#print(vocab.PAD_ID)
+'''
 
+bert_tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased")
+#bert_tokenizer.add_tokens(['“', '”', '‘', '’', '…'])
+vocab = bert_tokenizer.vocab
+'''
+tokens = bert_tokenizer.tokenize('대부분의 대원들에겐 첫 실전이었다.')
+print(tokens)
+'''
 def main(parser):
         
     args = parser.parse_args()
+    
+    if args.fp16 == True:
+        from apex import amp
+        
     data_dir = Path(args.data_dir)
     model_dir = Path(args.model_dir)   
     model_config = Config(json_path=model_dir / 'config.json')
     model_config.learning_rate = args.lr
     model_config.batch_size = args.batch_size
-    model_config.vocab_size = len(token_to_idx)
     
-    print("len(token_to_idx): ", len(token_to_idx))
+    model_config.vocab_size = len(vocab)
+    print("vocabulary length: ", len(vocab))
     
     # Train & Val Datasets
     train_data_dir = "../data/NER-master/말뭉치 - 형태소_개체명"
     tr_ds = NamedEntityRecognitionDataset(train_data_dir=train_data_dir, vocab=vocab, \
-                                          maxlen=model_config.maxlen, model_dir=model_dir)
+                                          tokenizer=bert_tokenizer, maxlen=model_config.maxlen, model_dir=model_dir)
     tr_dl = DataLoader(tr_ds, batch_size=model_config.batch_size, shuffle=True, num_workers=2, drop_last=False)
 
     val_data_dir = "../data/NER-master/validation_set"
     val_ds = NamedEntityRecognitionDataset(train_data_dir=val_data_dir, vocab=vocab, \
-                                           maxlen=model_config.maxlen, model_dir=model_dir)
+                                           tokenizer=bert_tokenizer, maxlen=model_config.maxlen, model_dir=model_dir)
     val_dl = DataLoader(val_ds, batch_size=model_config.batch_size, shuffle=True, num_workers=2, drop_last=False)
  
     # Model
-    #model = BertMulti_CRF(config=model_config, num_classes=len(tr_ds.ner_to_index), vocab=vocab)
-    #model = KobertBiLSTMCRF(config=model_config, num_classes=len(tr_ds.ner_to_index))
+    model = BertMulti_CRF(config=model_config, num_classes=len(tr_ds.ner_to_index), vocab=vocab)
     #model = BertMulti_Only(config=model_config, num_classes=len(tr_ds.ner_to_index), vocab=vocab)
-    model = BiLSTM(config=model_config, num_classes=len(tr_ds.ner_to_index), vocab=vocab)
+    #model = BiLSTM(config=model_config, num_classes=len(tr_ds.ner_to_index), vocab=vocab)
     #model = BiLSTM_CRF(config=model_config, num_classes=len(tr_ds.ner_to_index))
     model.train()
     
@@ -187,11 +197,6 @@ def main(parser):
                 log_likelihood, sequence_of_tags = model(x_input, token_type_ids, y_real)
                 loss = -1 * log_likelihood
             
-            '''
-            if n_gpu > 1:
-                loss = loss.mean()  # mean() to average on multi-gpu parallel training
-            '''
-            
             if model_config.gradient_accumulation_steps > 1:
                 loss = loss / model_config.gradient_accumulation_steps
             
@@ -215,7 +220,7 @@ def main(parser):
                 with torch.no_grad():
                     sequence_of_tags = torch.tensor(sequence_of_tags).to(device)
                     #print(sequence_of_tags.size(), y_real.size())
-                    mb_acc = (sequence_of_tags == y_real).float()[y_real != vocab.PAD_ID].mean()
+                    mb_acc = (sequence_of_tags == y_real).float()[y_real != vocab['[PAD]']].mean()
 
                 tr_acc = mb_acc.item()
                 tr_loss_avg = tr_loss / global_step
@@ -377,8 +382,8 @@ def evaluate(model, val_dl, prefix="NER"):
 
         y_real = y_real.to('cpu')
         sequence_of_tags = torch.tensor(sequence_of_tags).to('cpu')
-        count_correct += (sequence_of_tags == y_real).float()[y_real != vocab.PAD_ID].sum()  # 0,1,2,3 -> [CLS], [SEP], [PAD], [MASK] index
-        total_count += len(y_real[y_real != vocab.PAD_ID])
+        count_correct += (sequence_of_tags == y_real).float()[y_real != vocab['[PAD]']].sum()  # 0,1,2,3 -> [CLS], [SEP], [PAD], [MASK] index
+        total_count += len(y_real[y_real != vocab['[PAD]']])
         
         y_real = y_real.view(1, -1)
         y_real = torch.squeeze(y_real)

@@ -15,12 +15,14 @@ from collections import OrderedDict
 import re
 
 from pathlib import Path
+from pytorch_pretrained_bert import BertTokenizer
 from vocab import Vocabulary
 from pad_sequence import keras_pad_fn, my_pad
 
+bert_tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased")
 
 class NamedEntityRecognitionDataset(Dataset):
-    def __init__(self, train_data_dir: str, vocab, maxlen=30, model_dir=Path('data_in')) -> None:
+    def __init__(self, train_data_dir: str, vocab, tokenizer=bert_tokenizer, maxlen=30, model_dir=Path('data_in')) -> None:
         """
         :param train_data_in:
         :param transform_fn:
@@ -37,7 +39,9 @@ class NamedEntityRecognitionDataset(Dataset):
         self.pad = my_pad
         with open(self.model_dir / "ner_to_index.json", 'rb') as f:
             self.ner_to_index = json.load(f)
-            
+        self.tokenizer = tokenizer
+        self.unknown = []
+        
     def __len__(self) -> int:
         return len(self._corpus)
 
@@ -45,10 +49,10 @@ class NamedEntityRecognitionDataset(Dataset):
         # preprocessing
         # str -> id -> cls, sep -> pad
         
-        token_ids_with_cls_sep, tokens = self.transform_source_fn(self._corpus[idx].lower())
+        token_ids_with_cls_sep, tokens, prefix_sum_of_token_start_index = self.transform_source_fn(self._corpus[idx].lower())
         #print(token_ids_with_cls_sep, tokens)
-        list_of_ner_ids, list_of_ner_label = self.transform_target_fn(self._label[idx], tokens)
-        #print(list_of_ner_ids, list_of_ner_label) #[ 0 13 14 14  4  7] ['B-PER', 'I-PER', 'I-PER', 'O', 'B-NOH', 'I-NOH']一开始是0，之后不到30的用1填充
+        list_of_ner_ids, list_of_ner_label = self.transform_target_fn(self._label[idx], tokens, prefix_sum_of_token_start_index)
+        #print(self._corpus[idx].lower(), self._label[idx], tokens, list_of_ner_label, '\n') #一开始是0，之后不到30的用1填充        
         
         assert len(token_ids_with_cls_sep) == len(list_of_ner_ids)
         #print(list_of_ner_ids)
@@ -67,28 +71,44 @@ class NamedEntityRecognitionDataset(Dataset):
         # label_text = "첫 회를 시작으로 <13일:DAT>까지 <4일간:DUR> 총 <4회:NOH>에 걸쳐 매 회 <2편:NOH>씩 총 <8편:NOH>이 공개될 예정이다."
         # text = "트래버 모리슨 학장은 로스쿨 학생과 교직원이 바라라 전 검사의 사법정의에 대한 깊이 있는 지식과 경험으로부터 많은 것을 배울 수 있을 것이라고 말했다."
         # label_text = "<트래버 모리슨:PER> 학장은 로스쿨 학생과 교직원이 <바라라:PER> 전 검사의 사법정의에 대한 깊이 있는 지식과 경험으로부터 많은 것을 배울 수 있을 것이라고 말했다."
-        tokens = list(text)
+        tokens = self.tokenizer.tokenize(text)
+        '''
+        if "[UNK]" in tokens:
+            print(text, tokens)
+        '''
         
-        #print(tokens)
-        tokens_list = [self.vocab.token_to_idx.get(n, 100) for n in tokens]
-        tokens_list.insert(0, self.vocab.token_to_idx['[CLS]'])
-        tokens_list.append(self.vocab.token_to_idx['[SEP]'])
-        token_ids_with_cls_sep = self.pad(tokens_list, pad_id=self.vocab.PAD_ID, maxlen=self.maxlen)
+        tokens_list = self.tokenizer.convert_tokens_to_ids(tokens)
+        tokens_list.insert(0, self.vocab['[CLS]'])
+        tokens_list.append(self.vocab['[SEP]'])
+        token_ids_with_cls_sep = self.pad(tokens_list, pad_id=self.vocab['[PAD]'], maxlen=self.maxlen)
         #print(self.vocab.PAD_ID, token_ids_with_cls_sep) #PAD_ID=0, 
-        '''
-        for n in tokens:
-            try:
-                self.vocab.token_to_idx[n]
-            except KeyError:
-                print(n)
-        '''
+        
+        # save token sequence length for matching entity label to sequence label
+        prefix_sum_of_token_start_index = []
+        sum = 0
+        for i, token in enumerate(tokens):
+            if i == 0:
+                prefix_sum_of_token_start_index.append(0)
+                if token == '[UNK]':
+                    sum += 1
+                else:
+                    sum += len(token)
+            else: 
+                prefix_sum_of_token_start_index.append(sum)
+                if token == '[UNK]':
+                    sum += 1
+                elif '##' in token:
+                    sum += len(token) - 2
+                else:
+                    sum += len(token)
+        #print(token_ids_with_cls_sep, tokens, prefix_sum_of_token_start_index, '\n')
+        return token_ids_with_cls_sep, tokens, prefix_sum_of_token_start_index
 
-        return token_ids_with_cls_sep, tokens
 
-
-    def transform_target_fn(self, label_text, tokens):
+    def transform_target_fn(self, label_text, tokens, prefix_sum_of_token_start_index):
 
         regex_ner = re.compile('<(.+?):[A-Z]{3}>') # NER Tag가 2자리 문자면 {3} -> {2}로 변경 (e.g. LOC -> LC) 인경우
+        label_text = label_text.replace(' ', '')
         regex_filter_res = regex_ner.finditer(label_text)
 
         list_of_ner_tag = []
@@ -114,16 +134,17 @@ class NamedEntityRecognitionDataset(Dataset):
         entity_index = 0
         is_entity_still_B = True
         
-        for index, tup in enumerate(tokens):
-            token = tup
+        for tup in zip(tokens, prefix_sum_of_token_start_index):
+            token, index = tup
 
-            if '▁' in token:  # 주의할 점!! '▁' 이것과 우리가 쓰는 underscore '_'는 서로 다른 토큰임
-                index += 1  # 토큰이 띄어쓰기를 앞단에 포함한 경우 index 한개 앞으로 당김 # ('▁13', 9) -> ('13', 10)
-
+            '''
+            if '##' not in token:  # 주의할 점!! '▁' 이것과 우리가 쓰는 underscore '_'는 서로 다른 토큰임
+                index += 1
+            '''
             if entity_index < len(list_of_tuple_ner_start_end):
                 start, end = list_of_tuple_ner_start_end[entity_index]
 
-                if end < index:  # 엔티티 범위보다 현재 seq pos가 더 크면 다음 엔티티를 꺼내서 체크
+                if end <= index:  # 엔티티 범위보다 현재 seq pos가 더 크면 다음 엔티티를 꺼내서 체크
                     is_entity_still_B = True
                     entity_index = entity_index + 1 if entity_index + 1 < len(list_of_tuple_ner_start_end) else entity_index
                     start, end = list_of_tuple_ner_start_end[entity_index]
@@ -150,7 +171,7 @@ class NamedEntityRecognitionDataset(Dataset):
         # ner_str -> ner_ids -> cls + ner_ids + sep -> cls + ner_ids + sep + pad + pad .. + pad
         list_of_ner_ids = [self.ner_to_index['[CLS]']] + [self.ner_to_index[ner_tag] for ner_tag in list_of_ner_label] + [self.ner_to_index['[SEP]']]
         #print(list_of_ner_ids)
-        list_of_ner_ids = self.pad(list_of_ner_ids, pad_id=self.vocab.PAD_ID, maxlen=self.maxlen)
+        list_of_ner_ids = self.pad(list_of_ner_ids, pad_id=self.vocab['[PAD]'], maxlen=self.maxlen)
         #print(list_of_ner_ids, '\n')
         return list_of_ner_ids, list_of_ner_label
     
@@ -236,5 +257,6 @@ if __name__ == '__main__':
     ner_formatter = NamedEntityRecognitionFormatter()
     token_ids_with_cls_sep, tokens, prefix_sum_of_token_start_index = ner_formatter.transform_source_fn(text)
     ner_formatter.transform_target_fn(label_text, tokens, prefix_sum_of_token_start_index)
+
 
 
