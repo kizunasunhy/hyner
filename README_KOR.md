@@ -13,6 +13,7 @@ MXNet == 1.5.0 or higher
 gluonnlp == 0.8.1
 tensorflow == 1.14.0
 sentencepiece
+pytorch_transformers
 pytorch-crf
 ```
 Conda 가상환경을 권장합니다. PyTorch 0.4 같은 경우에는, we've tested that only torch0.4 + cuda9.2 can work. Otherwise you will get a "RuntimeError: CuDNN error: CUDNN_STATUS_SUCCESS" error.
@@ -117,11 +118,14 @@ cd bert_multi_model
 ```
 $ python train.py --fp16 --lr_schedule
 ```
-BERT-multi-cased 모델의 경우는 토큰말고 character 레벨을 바탕으로 개발한겁니다.
+BERT-multi-cased 모델의 경우는 
+"bert-base-multilingual-cased"의 BertTokenizer와 BertModel을
+활용해서 개발한 겁니다.  
+
 | Model | macro f1 score |
 | ------------ | ------------- |
-| BiLSTM-lr0.005-bs200 | 0.8385 |
+| BertMulti_CRF-lr5e-05-bs256 | 0.8776|
 
-KoBERT 모델과 비교해보면 역시 character 기반이 좀 부족하다고 볼 수 있습니다.
+KoBERT 모델과 비교해보면 역시 KoBERT가 더 나온다는것을 볼 수 있습니다.
 ### RESTful API
-개발할 예정입니다..
+개발 완료되었습니다.
