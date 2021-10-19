@@ -8,6 +8,7 @@ hyner is a Korean named entity recognizer (NER) based on KoBERT.
 PyTorch 0.4 or higher
 scikit-learn
 tqdm
+pandas
 MXNet == 1.5.0 or higher
 gluonnlp == 0.8.1
 sentencepiece
