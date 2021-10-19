@@ -10,10 +10,10 @@ scikit-learn
 tqdm
 MXNet == 1.5.0 or higher
 gluonnlp == 0.8.1
-tensorflow == 1.14.0
 sentencepiece
 pytorch_transformers
 pytorch-crf
+konlpy #Need Java 
 ```
 We highly recommned the conda virtual environment. And for PyTorch 0.4, we've tested that only torch0.4 + cuda9.2 can work. Otherwise you will get a "RuntimeError: CuDNN error: CUDNN_STATUS_SUCCESS" error.
 ```
